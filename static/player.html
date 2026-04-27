@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Своя игра - Игрок</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="player-card panel">
+      <h2>Подключение</h2>
+      <input class="input" id="nameInput" placeholder="Имя" />
+      <button class="button" id="connect">Войти</button>
+      <div class="status" id="playerStatus">Введите имя и подключитесь.</div>
+    </div>
+
+    <div class="player-card panel" id="gamePanel" style="display:none;">
+      <h2>Текущий раунд</h2>
+      <div class="status" id="questionStatus">Ожидание вопроса</div>
+      <div class="timer" id="timer">Таймер: -</div>
+      <button class="button buzz-button" id="buzz">Ответить</button>
+      <div class="buzz" id="buzzStatus">Первый: -</div>
+    </div>
+
+    <div class="player-card panel" id="finalPanel" style="display:none;">
+      <h2>Финальный раунд</h2>
+      <div class="status" id="finalPlayerStatus">Ждем запуска финала</div>
+      <label class="field">
+        <span>Ставка</span>
+        <input class="input" id="wagerInput" type="number" min="0" value="0" />
+      </label>
+      <button class="button" id="submitWager">Отправить ставку</button>
+      <label class="field">
+        <span>Ответ</span>
+        <input class="input" id="answerInput" type="text" placeholder="Твой ответ" />
+      </label>
+      <button class="button" id="submitAnswer">Отправить ответ</button>
+    </div>
+  </div>
+
+  <script src="/static/js/player.js"></script>
+</body>
+</html>

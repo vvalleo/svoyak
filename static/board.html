@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Своя игра - Экран</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div>
+        <div class="title">Своя игра - Музыкальный квиз</div>
+        <div class="subtitle">Общий экран для доски, таймера и финала</div>
+      </div>
+      <div class="status" id="currentStatus">Ожидание выбора вопроса</div>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="panel">
+      <h2>Текущий вопрос</h2>
+      <div class="status" id="currentQuestion">-</div>
+      <div class="timer" id="timer">Таймер: -</div>
+      <div class="buzz" id="buzz">Кто ответит первым: -</div>
+      <audio id="audio" controls></audio>
+      <div class="status" id="answer">Ответ: скрыт</div>
+    </div>
+
+    <div class="panel">
+      <h2>Таблица очков</h2>
+      <div class="status" id="scoresStatus">Очки видны игрокам</div>
+      <div class="scoreboard" id="scores"></div>
+    </div>
+  </div>
+
+  <script src="/static/js/board.js"></script>
+</body>
+</html>

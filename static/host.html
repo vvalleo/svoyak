@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Своя игра - Ведущий</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div>
+        <div class="title">Своя игра - Панель ведущего</div>
+        <div class="subtitle">Таймер, обычный раунд, финал и ручное начисление очков</div>
+      </div>
+      <div class="status" id="hostStatus">Ожидание выбора</div>
+    </div>
+
+    <div class="panel split-panel">
+      <div>
+        <h2>Раунд</h2>
+        <div class="controls compact">
+          <label class="field">
+            <span>Таймер вопроса</span>
+            <input class="input" id="questionTimer" type="number" min="3" max="120" value="15" />
+          </label>
+          <label class="field">
+            <span>Таймер финала</span>
+            <input class="input" id="finalTimer" type="number" min="5" max="180" value="30" />
+          </label>
+        </div>
+      </div>
+      <div class="controls align-end">
+        <button class="button secondary" id="startFinal">Запустить финал</button>
+        <button class="button secondary" id="openFinal">Открыть финальный вопрос</button>
+        <button class="button" id="revealFinalScores">Показать финальные очки</button>
+        <button class="button danger" id="resetFinal">Сбросить финал</button>
+      </div>
+    </div>
+
+    <div class="panel split-panel">
+      <div>
+        <h2>Вход для игроков</h2>
+        <div class="status" id="playerLink">Ссылка появится после загрузки страницы</div>
+      </div>
+      <div class="qr-wrap">
+        <img id="playerQr" alt="QR для игроков" class="qr-image" />
+      </div>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="panel">
+      <h2>Управление вопросом</h2>
+      <div class="status" id="currentQuestion">-</div>
+      <div class="timer" id="timer">Таймер: -</div>
+      <audio id="audio" controls></audio>
+      <div class="controls">
+        <button class="button secondary" id="reveal">Показать ответ</button>
+        <button class="button secondary" id="clearBuzz">Сбросить кнопку</button>
+        <button class="button danger" id="closeQuestion">Закрыть вопрос</button>
+      </div>
+      <div class="status" id="answer">Ответ: -</div>
+      <div class="buzz" id="buzz">Кто ответит первым: -</div>
+    </div>
+
+    <div class="panel">
+      <h2>Начисление очков</h2>
+      <div class="controls">
+        <select class="input" id="playerSelect"></select>
+        <input class="input" id="delta" type="number" placeholder="Очки, например 200 или -200" />
+        <button class="button" id="award">Применить</button>
+        <button class="button secondary" id="double">Удвоить текущий вопрос</button>
+        <button class="button danger" id="minus">Списать текущий вопрос</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Финальный раунд</h2>
+      <div class="status" id="finalStatus">Финал еще не запущен</div>
+      <div class="final-grid" id="finalGrid"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Таблица очков</h2>
+      <div class="scoreboard" id="scores"></div>
+    </div>
+  </div>
+
+  <script src="/static/js/host.js"></script>
+</body>
+</html>

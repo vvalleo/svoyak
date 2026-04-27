@@ -1,0 +1,281 @@
+:root {
+  --bg: #0b1536;
+  --bg-2: #101b47;
+  --accent: #f4c247;
+  --accent-2: #6ae3ff;
+  --text: #f5f7ff;
+  --muted: #9fb2ff;
+  --danger: #ff5b6e;
+  --shadow: rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Futura", "Gill Sans", "Century Gothic", sans-serif;
+  color: var(--text);
+  background: radial-gradient(1200px 800px at 20% -10%, #1c2a6b, var(--bg)),
+    radial-gradient(900px 700px at 90% 10%, #1a3a63, var(--bg-2));
+  min-height: 100vh;
+}
+
+.app {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  font-size: 28px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.board {
+  display: grid;
+  gap: 8px;
+  background: rgba(15, 25, 61, 0.65);
+  padding: 8px;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px var(--shadow);
+}
+
+.board-row {
+  display: grid;
+  gap: 8px;
+}
+
+.board-cell {
+  background: linear-gradient(160deg, #132663, #0e1c49);
+  border: 2px solid #1c3b84;
+  border-radius: 10px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.board-cell.disabled {
+  cursor: default;
+  color: #2b3a6e;
+  background: #0d1638;
+  border-color: #111f4a;
+}
+
+.board-cell:hover:not(.disabled) {
+  transform: translateY(-2px);
+  background: linear-gradient(160deg, #19337d, #142a66);
+}
+
+.category {
+  height: 80px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-2);
+}
+
+.panel {
+  background: rgba(12, 20, 50, 0.75);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 30px var(--shadow);
+  display: grid;
+  gap: 10px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.controls.compact {
+  align-items: end;
+}
+
+.controls.align-end {
+  align-items: end;
+  justify-content: flex-end;
+}
+
+.button {
+  background: var(--accent);
+  color: #1b2240;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.2s ease;
+}
+
+.button.secondary {
+  background: #1c2d6b;
+  color: var(--text);
+  border: 1px solid #2e4aa0;
+}
+
+.button.danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.status {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.timer {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+.scoreboard {
+  display: grid;
+  gap: 6px;
+}
+
+.score-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: rgba(20, 34, 82, 0.65);
+  border-radius: 8px;
+}
+
+.buzz {
+  font-size: 22px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.player-card {
+  max-width: 420px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #2f4aa0;
+  background: #0f1c45;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.field span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.buzz-button {
+  width: 100%;
+  padding: 18px 16px;
+  font-size: 22px;
+  margin-top: 12px;
+}
+
+.split-panel {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: end;
+}
+
+.qr-wrap {
+  display: grid;
+  justify-content: end;
+}
+
+.qr-image {
+  width: 160px;
+  height: 160px;
+  border-radius: 12px;
+  background: white;
+  padding: 8px;
+}
+
+.final-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.final-card {
+  background: rgba(20, 34, 82, 0.65);
+  border: 1px solid #2e4aa0;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.final-card-title {
+  font-size: 18px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .board-cell {
+    height: 68px;
+    font-size: 22px;
+  }
+  .category {
+    height: 70px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 700px) {
+  .app {
+    padding: 16px;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .board-cell {
+    height: 56px;
+    font-size: 18px;
+  }
+}

@@ -4,6 +4,7 @@ const hostStatus = document.getElementById("hostStatus");
 const currentQuestion = document.getElementById("currentQuestion");
 const answerTimerEl = document.getElementById("answerTimer");
 const buzzEl = document.getElementById("buzz");
+const chooserStatusEl = document.getElementById("chooserStatus");
 const audioEl = document.getElementById("audio");
 const answerEl = document.getElementById("answer");
 const playerSelect = document.getElementById("playerSelect");
@@ -15,12 +16,13 @@ const playerLinkEl = document.getElementById("playerLink");
 const playerQrEl = document.getElementById("playerQr");
 
 const revealBtn = document.getElementById("reveal");
-const clearBuzzBtn = document.getElementById("clearBuzz");
+const resolveCorrectBtn = document.getElementById("resolveCorrect");
+const resolveDoubleBtn = document.getElementById("resolveDouble");
+const resolveWrongBtn = document.getElementById("resolveWrong");
+const resolveNoPenaltyBtn = document.getElementById("resolveNoPenalty");
 const closeQuestionBtn = document.getElementById("closeQuestion");
 const awardBtn = document.getElementById("award");
 const setScoreBtn = document.getElementById("setScore");
-const doubleBtn = document.getElementById("double");
-const minusBtn = document.getElementById("minus");
 const startFinalBtn = document.getElementById("startFinal");
 const openFinalBtn = document.getElementById("openFinal");
 const revealFinalScoresBtn = document.getElementById("revealFinalScores");
@@ -108,7 +110,13 @@ function updateAnswerTimer(deadline) {
 
 function updateCurrent(data) {
   if (!data || !data.current) {
-    hostStatus.textContent = data?.final_round?.active ? "Финал в процессе" : "Ожидание выбора";
+    if (data?.final_round?.active) {
+      hostStatus.textContent = "Финал в процессе";
+    } else if (data?.chooser) {
+      hostStatus.textContent = `Следующий вопрос выбирает ${data.chooser}`;
+    } else {
+      hostStatus.textContent = "Ожидание выбора";
+    }
     currentQuestion.textContent = "-";
     currentPoints = 0;
     answerEl.textContent = "Ответ: -";
@@ -142,6 +150,10 @@ function updateBuzz(name, buzzOpen, currentKind) {
     return;
   }
   buzzEl.textContent = buzzOpen ? "Кнопка ответа открыта" : "Кнопка ответа закрыта";
+}
+
+function updateChooser(chooser) {
+  chooserStatusEl.textContent = chooser ? `Следующий вопрос выбирает: ${chooser}` : "Следующий вопрос пока не выбран.";
 }
 
 function renderFinal(finalRound) {
@@ -200,6 +212,7 @@ function syncFromState(data) {
   renderScores(data.scores);
   updateCurrent(data);
   updateBuzz(data.buzz, data.buzz_open, data.current?.kind);
+  updateChooser(data.chooser);
   renderFinal(data.final_round);
 }
 
@@ -217,6 +230,7 @@ ws.addEventListener("message", (event) => {
   if (msg.type === "question_opened" && msg.audio_url) {
     audioEl.src = msg.audio_url;
     audioEl.load();
+    audioEl.play().catch(() => {});
   }
   if (msg.type === "buzz") {
     audioEl.pause();
@@ -234,16 +248,21 @@ function openQuestion(cat, q) {
   ws.send(JSON.stringify({ type: "open_question", cat, q }));
 }
 
+function resolveBuzz(result) {
+  ws.send(JSON.stringify({ type: "resolve_buzz", result }));
+}
+
 function gradeFinalAnswer(name, correct) {
   ws.send(JSON.stringify({ type: "grade_final_answer", name, correct }));
 }
 
+resolveCorrectBtn.addEventListener("click", () => resolveBuzz("correct"));
+resolveDoubleBtn.addEventListener("click", () => resolveBuzz("double"));
+resolveWrongBtn.addEventListener("click", () => resolveBuzz("wrong"));
+resolveNoPenaltyBtn.addEventListener("click", () => resolveBuzz("no_penalty"));
+
 revealBtn.addEventListener("click", () => {
   ws.send(JSON.stringify({ type: "reveal_answer" }));
-});
-
-clearBuzzBtn.addEventListener("click", () => {
-  ws.send(JSON.stringify({ type: "clear_buzz" }));
 });
 
 closeQuestionBtn.addEventListener("click", () => {
@@ -272,18 +291,6 @@ deltaInput.addEventListener("keydown", (event) => {
 
 scoreValueInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") setScoreBtn.click();
-});
-
-doubleBtn.addEventListener("click", () => {
-  const name = playerSelect.value;
-  if (!name || !currentPoints) return;
-  ws.send(JSON.stringify({ type: "award", name, delta: currentPoints * 2 }));
-});
-
-minusBtn.addEventListener("click", () => {
-  const name = playerSelect.value;
-  if (!name || !currentPoints) return;
-  ws.send(JSON.stringify({ type: "award", name, delta: -currentPoints }));
 });
 
 startFinalBtn.addEventListener("click", () => {

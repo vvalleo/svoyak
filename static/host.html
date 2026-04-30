@@ -30,14 +30,18 @@
           <div class="status big-status" id="currentQuestion">-</div>
           <div class="timer marquee-timer" id="answerTimer">Таймер ответа: -</div>
           <div class="buzz spotlight-buzz" id="buzz">Кто ответит первым: -</div>
+          <div class="status soft-status" id="chooserStatus">Следующий вопрос пока не выбран.</div>
           <div class="audio-wrap">
             <audio id="audio" controls></audio>
           </div>
           <div class="status answer-line" id="answer">Ответ: -</div>
         </div>
         <div class="controls stage-actions">
+          <button class="button" id="resolveCorrect">Зачесть ответ</button>
+          <button class="button" id="resolveDouble">Удвоить за ответ</button>
+          <button class="button danger" id="resolveWrong">Снять баллы</button>
+          <button class="button secondary" id="resolveNoPenalty">Неверно без штрафа</button>
           <button class="button secondary" id="reveal">Показать ответ</button>
-          <button class="button secondary" id="clearBuzz">Неверно / открыть кнопку</button>
           <button class="button danger" id="closeQuestion">Закрыть вопрос</button>
         </div>
       </section>
@@ -82,15 +86,13 @@
     <div class="lower-grid">
       <section class="panel">
         <div class="panel-head">
-          <h2>Очки</h2>
+          <h2>Корректировка очков</h2>
           <div class="status soft-status">Добавление, штрафы и ручная корректировка счета.</div>
         </div>
         <div class="form-grid">
           <select class="input" id="playerSelect"></select>
           <input class="input" id="delta" type="number" placeholder="Изменение, например 200 или -200" />
           <button class="button" id="award">Применить</button>
-          <button class="button secondary" id="double">Удвоить текущий вопрос</button>
-          <button class="button danger" id="minus">Списать текущий вопрос</button>
         </div>
         <div class="form-grid compact-grid">
           <input class="input" id="scoreValue" type="number" placeholder="Итоговый счет игрока" />

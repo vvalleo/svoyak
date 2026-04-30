@@ -38,6 +38,7 @@ state: Dict[str, Any] = {
     "current": None,
     "buzz": None,
     "buzz_open": False,
+    "chooser": None,
     "answered_players": set(),
     "answer_timer_deadline": None,
     "answer_timer_task": None,
@@ -181,6 +182,7 @@ def board_state_for(role: str, player_name: Optional[str] = None) -> Dict[str, A
         "current": current_payload(),
         "buzz": state["buzz"],
         "buzz_open": state["buzz_open"],
+        "chooser": state["chooser"],
         "player_answered": player_name in state["answered_players"] if player_name else False,
         "answer_timer_deadline": state["answer_timer_deadline"],
         "scores": public_scores(role),
@@ -339,6 +341,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 stop_answer_timer()
                 state["opened"].add(key)
                 state["current"] = {"kind": "board", "cat": cat, "q": q}
+                state["chooser"] = None
                 state["buzz"] = None
                 state["buzz_open"] = True
                 state["answered_players"] = set()
@@ -382,6 +385,36 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     state["scores"][target] = sanitize_score(state["scores"][target] + delta)
                     await broadcast_state()
 
+            elif msg_type == "resolve_buzz" and role == "host":
+                if not state["current"] or state["current"].get("kind") != "board" or not state["buzz"]:
+                    continue
+                result = data.get("result")
+                target = state["buzz"]
+                points = (current_question_data() or {}).get("points", 0)
+                stop_answer_timer()
+                if result == "correct":
+                    state["scores"][target] = sanitize_score(state["scores"][target] + points)
+                    state["chooser"] = target
+                    state["current"] = None
+                    state["buzz"] = None
+                    state["buzz_open"] = False
+                    state["answered_players"] = set()
+                elif result == "double":
+                    state["scores"][target] = sanitize_score(state["scores"][target] + points * 2)
+                    state["chooser"] = target
+                    state["current"] = None
+                    state["buzz"] = None
+                    state["buzz_open"] = False
+                    state["answered_players"] = set()
+                elif result == "wrong":
+                    state["scores"][target] = sanitize_score(state["scores"][target] - points)
+                    state["buzz"] = None
+                    state["buzz_open"] = True
+                elif result == "no_penalty":
+                    state["buzz"] = None
+                    state["buzz_open"] = True
+                await broadcast_state()
+
             elif msg_type == "set_score" and role == "host":
                 target = data.get("name")
                 score = int(data.get("score"))
@@ -403,6 +436,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
+                state["chooser"] = None
                 state["answered_players"] = set()
                 await broadcast_state()
 
@@ -411,6 +445,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
+                state["chooser"] = None
                 state["answered_players"] = set()
                 state["public_scores_visible"] = False
                 state["final_round"] = {
@@ -488,6 +523,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
+                state["chooser"] = None
                 state["answered_players"] = set()
                 state["public_scores_visible"] = True
                 reset_final_round()

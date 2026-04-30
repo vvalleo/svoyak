@@ -4,6 +4,7 @@ const currentStatus = document.getElementById("currentStatus");
 const currentQuestion = document.getElementById("currentQuestion");
 const answerTimerEl = document.getElementById("answerTimer");
 const buzzEl = document.getElementById("buzz");
+const chooserStatusEl = document.getElementById("chooserStatus");
 const audioEl = document.getElementById("audio");
 const answerEl = document.getElementById("answer");
 const scoresStatusEl = document.getElementById("scoresStatus");
@@ -76,7 +77,13 @@ function updateAnswerTimer(deadline) {
 
 function updateCurrent(data) {
   if (!data || !data.current) {
-    currentStatus.textContent = data?.final_round?.active ? "Финал в процессе" : "Ожидание выбора вопроса";
+    if (data?.final_round?.active) {
+      currentStatus.textContent = "Финал в процессе";
+    } else if (data?.chooser) {
+      currentStatus.textContent = `Следующий вопрос выбирает ${data.chooser}`;
+    } else {
+      currentStatus.textContent = "Ожидание выбора вопроса";
+    }
     currentQuestion.textContent = "-";
     answerEl.textContent = "Ответ: скрыт";
     audioEl.removeAttribute("src");
@@ -97,6 +104,10 @@ function updateCurrent(data) {
   updateAnswerTimer(data.answer_timer_deadline);
 }
 
+function updateChooser(chooser) {
+  chooserStatusEl.textContent = chooser ? `Следующий вопрос выбирает: ${chooser}` : "Следующий вопрос пока не выбран.";
+}
+
 function updateBuzz(name, buzzOpen, currentKind) {
   if (currentKind === "final") {
     buzzEl.textContent = "Финал: игроки отвечают скрыто";
@@ -115,6 +126,7 @@ function syncFromState(data) {
   renderScores(data.scores, data.public_scores_visible);
   updateCurrent(data);
   updateBuzz(data.buzz, data.buzz_open, data.current?.kind);
+  updateChooser(data.chooser);
 }
 
 const wsScheme = location.protocol === "https:" ? "wss" : "ws";
@@ -131,6 +143,7 @@ ws.addEventListener("message", (event) => {
   if (msg.type === "question_opened" && msg.audio_url) {
     audioEl.src = msg.audio_url;
     audioEl.load();
+    audioEl.play().catch(() => {});
   }
   if (msg.type === "buzz") {
     audioEl.pause();

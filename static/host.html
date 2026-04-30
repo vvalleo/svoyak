@@ -19,16 +19,7 @@
     <div class="panel split-panel">
       <div>
         <h2>Раунд</h2>
-        <div class="controls compact">
-          <label class="field">
-            <span>Таймер вопроса</span>
-            <input class="input" id="questionTimer" type="number" min="3" max="120" value="15" />
-          </label>
-          <label class="field">
-            <span>Таймер финала</span>
-            <input class="input" id="finalTimer" type="number" min="5" max="180" value="30" />
-          </label>
-        </div>
+        <div class="status">Длительность вопроса теперь задается длиной твоего аудио-фрагмента.</div>
       </div>
       <div class="controls align-end">
         <button class="button secondary" id="startFinal">Запустить финал</button>
@@ -53,7 +44,6 @@
     <div class="panel">
       <h2>Управление вопросом</h2>
       <div class="status" id="currentQuestion">-</div>
-      <div class="timer" id="timer">Таймер: -</div>
       <audio id="audio" controls></audio>
       <div class="controls">
         <button class="button secondary" id="reveal">Показать ответ</button>

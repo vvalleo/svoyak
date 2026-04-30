@@ -3,7 +3,6 @@ const connectBtn = document.getElementById("connect");
 const playerStatus = document.getElementById("playerStatus");
 const gamePanel = document.getElementById("gamePanel");
 const questionStatus = document.getElementById("questionStatus");
-const timerEl = document.getElementById("timer");
 const buzzBtn = document.getElementById("buzz");
 const buzzStatus = document.getElementById("buzzStatus");
 const finalPanel = document.getElementById("finalPanel");
@@ -16,7 +15,6 @@ const submitAnswerBtn = document.getElementById("submitAnswer");
 let ws = null;
 let connected = false;
 let currentOpen = false;
-let timerInterval = null;
 
 function setStatus(text) {
   playerStatus.textContent = text;
@@ -34,38 +32,16 @@ function setBuzzEnabled(enabled) {
   buzzBtn.disabled = !enabled;
 }
 
-function updateTimer(deadline) {
-  if (timerInterval) clearInterval(timerInterval);
-  if (!deadline) {
-    timerEl.textContent = "Таймер: -";
-    return;
-  }
-
-  const tick = () => {
-    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
-    timerEl.textContent = `Таймер: ${remaining} сек`;
-    if (remaining <= 0 && timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-  };
-
-  tick();
-  timerInterval = setInterval(tick, 250);
-}
-
-function updateQuestion(current, buzzOpen, timerDeadline) {
+function updateQuestion(current, buzzOpen) {
   if (!current || current.kind === "final") {
     currentOpen = false;
     setQuestion(current?.kind === "final" ? "Финальный раунд идет" : "Ожидание вопроса");
     setBuzzEnabled(false);
-    updateTimer(timerDeadline);
     return;
   }
   currentOpen = true;
   setQuestion(`Идет вопрос за ${current.points}`);
   setBuzzEnabled(Boolean(buzzOpen));
-  updateTimer(timerDeadline);
 }
 
 function updateFinal(finalRound, current) {
@@ -105,7 +81,7 @@ function updateFinal(finalRound, current) {
 }
 
 function updateState(data) {
-  updateQuestion(data.current, data.buzz_open && !data.buzz, data.timer_deadline);
+  updateQuestion(data.current, data.buzz_open && !data.buzz);
 
   if (data.current?.kind === "final") {
     setBuzz("Финал: ответы скрыты");
@@ -147,9 +123,6 @@ connectBtn.addEventListener("click", () => {
     }
     if (msg.type === "buzz" && msg.name) {
       setBuzz(`Первый: ${msg.name}`);
-      setBuzzEnabled(false);
-    }
-    if (msg.type === "timer_expired") {
       setBuzzEnabled(false);
     }
   });

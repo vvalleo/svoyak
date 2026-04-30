@@ -2,14 +2,12 @@ const boardEl = document.getElementById("board");
 const scoresEl = document.getElementById("scores");
 const currentStatus = document.getElementById("currentStatus");
 const currentQuestion = document.getElementById("currentQuestion");
-const timerEl = document.getElementById("timer");
 const buzzEl = document.getElementById("buzz");
 const audioEl = document.getElementById("audio");
 const answerEl = document.getElementById("answer");
 const scoresStatusEl = document.getElementById("scoresStatus");
 
 let state = null;
-let timerInterval = null;
 
 function renderBoard(data) {
   boardEl.innerHTML = "";
@@ -50,26 +48,6 @@ function renderScores(scores, visible) {
   });
 }
 
-function updateTimer(deadline) {
-  if (timerInterval) clearInterval(timerInterval);
-  if (!deadline) {
-    timerEl.textContent = "Таймер: -";
-    return;
-  }
-
-  const tick = () => {
-    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
-    timerEl.textContent = `Таймер: ${remaining} сек`;
-    if (remaining <= 0 && timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-  };
-
-  tick();
-  timerInterval = setInterval(tick, 250);
-}
-
 function updateCurrent(data) {
   if (!data || !data.current) {
     currentStatus.textContent = data?.final_round?.active ? "Финал в процессе" : "Ожидание выбора вопроса";
@@ -77,7 +55,6 @@ function updateCurrent(data) {
     answerEl.textContent = "Ответ: скрыт";
     audioEl.removeAttribute("src");
     audioEl.pause();
-    updateTimer(null);
     return;
   }
 
@@ -90,7 +67,6 @@ function updateCurrent(data) {
   }
 
   answerEl.textContent = "Ответ: скрыт";
-  updateTimer(data.timer_deadline);
 }
 
 function updateBuzz(name, buzzOpen, currentKind) {
@@ -133,8 +109,5 @@ ws.addEventListener("message", (event) => {
   }
   if (msg.type === "answer") {
     answerEl.textContent = `Ответ: ${msg.answer || "-"}`;
-  }
-  if (msg.type === "timer_expired") {
-    timerEl.textContent = "Таймер: время вышло";
   }
 });

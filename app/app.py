@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import asyncio
 import json
-import time
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -38,8 +36,6 @@ state: Dict[str, Any] = {
     "current": None,
     "buzz": None,
     "buzz_open": False,
-    "timer_deadline": None,
-    "timer_task": None,
     "scores": {},
     "public_scores_visible": True,
     "final_round": {
@@ -180,8 +176,6 @@ def board_state_for(role: str, player_name: Optional[str] = None) -> Dict[str, A
         "current": current_payload(),
         "buzz": state["buzz"],
         "buzz_open": state["buzz_open"],
-        "timer_deadline": state["timer_deadline"],
-        "timer_seconds": DEFAULT_TIMER_SECONDS,
         "scores": public_scores(role),
         "public_scores_visible": state["public_scores_visible"],
         "final_round": public_final_state(role, player_name),
@@ -222,37 +216,6 @@ async def broadcast_state() -> None:
     for conn in dead:
         if conn in connections:
             connections.remove(conn)
-
-
-def cancel_timer() -> None:
-    task = state.get("timer_task")
-    if task and not task.done():
-        task.cancel()
-    state["timer_task"] = None
-    state["timer_deadline"] = None
-
-
-async def expire_timer() -> None:
-    state["buzz_open"] = False
-    state["timer_deadline"] = None
-    state["timer_task"] = None
-    await broadcast({"type": "timer_expired"})
-    await broadcast_state()
-
-
-def start_timer(seconds: int) -> None:
-    cancel_timer()
-    deadline = time.time() + seconds
-    state["timer_deadline"] = deadline
-
-    async def timer_runner() -> None:
-        try:
-            await asyncio.sleep(seconds)
-            await expire_timer()
-        except asyncio.CancelledError:
-            pass
-
-    state["timer_task"] = asyncio.create_task(timer_runner())
 
 
 def reset_final_round() -> None:
@@ -335,7 +298,6 @@ async def ws_endpoint(ws: WebSocket) -> None:
             if msg_type == "open_question" and role == "host":
                 cat = int(data.get("cat"))
                 q = int(data.get("q"))
-                seconds = max(3, min(120, int(data.get("seconds") or DEFAULT_TIMER_SECONDS)))
                 key = _key(cat, q)
                 if key in state["opened"] or state["final_round"]["active"]:
                     continue
@@ -343,7 +305,6 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 state["current"] = {"kind": "board", "cat": cat, "q": q}
                 state["buzz"] = None
                 state["buzz_open"] = True
-                start_timer(seconds)
                 await broadcast(
                     {
                         "type": "question_opened",
@@ -363,8 +324,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
             elif msg_type == "clear_buzz" and role == "host":
                 if state["current"] and state["current"]["kind"] == "board":
                     state["buzz"] = None
-                    if state["timer_deadline"] is not None:
-                        state["buzz_open"] = True
+                    state["buzz_open"] = True
                 await broadcast({"type": "buzz", "name": None})
                 await broadcast_state()
 
@@ -384,14 +344,12 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 await broadcast_state()
 
             elif msg_type == "close_question" and role == "host":
-                cancel_timer()
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
                 await broadcast_state()
 
             elif msg_type == "start_final_round" and role == "host":
-                cancel_timer()
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
@@ -423,10 +381,8 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     continue
                 state["final_round"]["phase"] = "answering"
                 state["current"] = {"kind": "final"}
-                seconds = max(5, min(180, int(data.get("seconds") or 30)))
                 state["buzz"] = None
                 state["buzz_open"] = False
-                start_timer(seconds)
                 await broadcast(
                     {
                         "type": "question_opened",
@@ -464,11 +420,9 @@ async def ws_endpoint(ws: WebSocket) -> None:
             elif msg_type == "reveal_final_scores" and role == "host":
                 state["public_scores_visible"] = True
                 state["final_round"]["phase"] = "done"
-                cancel_timer()
                 await broadcast_state()
 
             elif msg_type == "reset_final_round" and role == "host":
-                cancel_timer()
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False

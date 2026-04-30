@@ -2,7 +2,6 @@ const boardEl = document.getElementById("board");
 const scoresEl = document.getElementById("scores");
 const hostStatus = document.getElementById("hostStatus");
 const currentQuestion = document.getElementById("currentQuestion");
-const timerEl = document.getElementById("timer");
 const buzzEl = document.getElementById("buzz");
 const audioEl = document.getElementById("audio");
 const answerEl = document.getElementById("answer");
@@ -10,8 +9,6 @@ const playerSelect = document.getElementById("playerSelect");
 const deltaInput = document.getElementById("delta");
 const finalStatus = document.getElementById("finalStatus");
 const finalGrid = document.getElementById("finalGrid");
-const questionTimerInput = document.getElementById("questionTimer");
-const finalTimerInput = document.getElementById("finalTimer");
 const playerLinkEl = document.getElementById("playerLink");
 const playerQrEl = document.getElementById("playerQr");
 
@@ -28,7 +25,6 @@ const resetFinalBtn = document.getElementById("resetFinal");
 
 let state = null;
 let currentPoints = 0;
-let timerInterval = null;
 const playerUrl = `${window.location.origin}/player`;
 
 playerLinkEl.textContent = playerUrl;
@@ -82,26 +78,6 @@ function renderScores(scores) {
   });
 }
 
-function updateTimer(deadline) {
-  if (timerInterval) clearInterval(timerInterval);
-  if (!deadline) {
-    timerEl.textContent = "Таймер: -";
-    return;
-  }
-
-  const tick = () => {
-    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
-    timerEl.textContent = `Таймер: ${remaining} сек`;
-    if (remaining <= 0 && timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-  };
-
-  tick();
-  timerInterval = setInterval(tick, 250);
-}
-
 function updateCurrent(data) {
   if (!data || !data.current) {
     hostStatus.textContent = data?.final_round?.active ? "Финал в процессе" : "Ожидание выбора";
@@ -110,7 +86,6 @@ function updateCurrent(data) {
     answerEl.textContent = "Ответ: -";
     audioEl.removeAttribute("src");
     audioEl.pause();
-    updateTimer(null);
     return;
   }
 
@@ -125,7 +100,6 @@ function updateCurrent(data) {
   }
 
   answerEl.textContent = "Ответ: -";
-  updateTimer(data.timer_deadline);
 }
 
 function updateBuzz(name) {
@@ -212,14 +186,10 @@ ws.addEventListener("message", (event) => {
   if (msg.type === "answer") {
     answerEl.textContent = `Ответ: ${msg.answer || "-"}`;
   }
-  if (msg.type === "timer_expired") {
-    timerEl.textContent = "Таймер: время вышло";
-  }
 });
 
 function openQuestion(cat, q) {
-  const seconds = parseInt(questionTimerInput.value, 10) || 15;
-  ws.send(JSON.stringify({ type: "open_question", cat, q, seconds }));
+  ws.send(JSON.stringify({ type: "open_question", cat, q }));
 }
 
 function gradeFinalAnswer(name, correct) {
@@ -267,8 +237,7 @@ startFinalBtn.addEventListener("click", () => {
 });
 
 openFinalBtn.addEventListener("click", () => {
-  const seconds = parseInt(finalTimerInput.value, 10) || 30;
-  ws.send(JSON.stringify({ type: "open_final_question", seconds }));
+  ws.send(JSON.stringify({ type: "open_final_question" }));
 });
 
 revealFinalScoresBtn.addEventListener("click", () => {

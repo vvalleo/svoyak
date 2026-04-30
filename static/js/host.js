@@ -2,11 +2,13 @@ const boardEl = document.getElementById("board");
 const scoresEl = document.getElementById("scores");
 const hostStatus = document.getElementById("hostStatus");
 const currentQuestion = document.getElementById("currentQuestion");
+const answerTimerEl = document.getElementById("answerTimer");
 const buzzEl = document.getElementById("buzz");
 const audioEl = document.getElementById("audio");
 const answerEl = document.getElementById("answer");
 const playerSelect = document.getElementById("playerSelect");
 const deltaInput = document.getElementById("delta");
+const scoreValueInput = document.getElementById("scoreValue");
 const finalStatus = document.getElementById("finalStatus");
 const finalGrid = document.getElementById("finalGrid");
 const playerLinkEl = document.getElementById("playerLink");
@@ -16,6 +18,7 @@ const revealBtn = document.getElementById("reveal");
 const clearBuzzBtn = document.getElementById("clearBuzz");
 const closeQuestionBtn = document.getElementById("closeQuestion");
 const awardBtn = document.getElementById("award");
+const setScoreBtn = document.getElementById("setScore");
 const doubleBtn = document.getElementById("double");
 const minusBtn = document.getElementById("minus");
 const startFinalBtn = document.getElementById("startFinal");
@@ -25,6 +28,7 @@ const resetFinalBtn = document.getElementById("resetFinal");
 
 let state = null;
 let currentPoints = 0;
+let answerTimerInterval = null;
 const playerUrl = `${window.location.origin}/player`;
 
 playerLinkEl.textContent = playerUrl;
@@ -78,6 +82,30 @@ function renderScores(scores) {
   });
 }
 
+function updateAnswerTimer(deadline) {
+  if (answerTimerInterval) {
+    clearInterval(answerTimerInterval);
+    answerTimerInterval = null;
+  }
+
+  if (!deadline) {
+    answerTimerEl.textContent = "Таймер ответа: -";
+    return;
+  }
+
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
+    answerTimerEl.textContent = `Таймер ответа: ${remaining} сек`;
+    if (remaining <= 0 && answerTimerInterval) {
+      clearInterval(answerTimerInterval);
+      answerTimerInterval = null;
+    }
+  };
+
+  tick();
+  answerTimerInterval = setInterval(tick, 250);
+}
+
 function updateCurrent(data) {
   if (!data || !data.current) {
     hostStatus.textContent = data?.final_round?.active ? "Финал в процессе" : "Ожидание выбора";
@@ -86,6 +114,7 @@ function updateCurrent(data) {
     answerEl.textContent = "Ответ: -";
     audioEl.removeAttribute("src");
     audioEl.pause();
+    updateAnswerTimer(null);
     return;
   }
 
@@ -100,10 +129,19 @@ function updateCurrent(data) {
   }
 
   answerEl.textContent = "Ответ: -";
+  updateAnswerTimer(data.answer_timer_deadline);
 }
 
-function updateBuzz(name) {
-  buzzEl.textContent = `Кто ответит первым: ${name || "-"}`;
+function updateBuzz(name, buzzOpen, currentKind) {
+  if (currentKind === "final") {
+    buzzEl.textContent = "Финал: без кнопки ответа";
+    return;
+  }
+  if (name) {
+    buzzEl.textContent = `Отвечает: ${name}`;
+    return;
+  }
+  buzzEl.textContent = buzzOpen ? "Кнопка ответа открыта" : "Кнопка ответа закрыта";
 }
 
 function renderFinal(finalRound) {
@@ -161,7 +199,7 @@ function syncFromState(data) {
   renderBoard(data);
   renderScores(data.scores);
   updateCurrent(data);
-  updateBuzz(data.buzz);
+  updateBuzz(data.buzz, data.buzz_open, data.current?.kind);
   renderFinal(data.final_round);
 }
 
@@ -181,10 +219,14 @@ ws.addEventListener("message", (event) => {
     audioEl.load();
   }
   if (msg.type === "buzz") {
-    updateBuzz(msg.name);
+    audioEl.pause();
+    updateBuzz(msg.name, false, state?.current?.kind);
   }
   if (msg.type === "answer") {
     answerEl.textContent = `Ответ: ${msg.answer || "-"}`;
+  }
+  if (msg.type === "answer_timer_expired") {
+    answerTimerEl.textContent = "Таймер ответа: время вышло";
   }
 });
 
@@ -216,8 +258,20 @@ awardBtn.addEventListener("click", () => {
   deltaInput.value = "";
 });
 
+setScoreBtn.addEventListener("click", () => {
+  const name = playerSelect.value;
+  const score = parseInt(scoreValueInput.value, 10);
+  if (!name || Number.isNaN(score)) return;
+  ws.send(JSON.stringify({ type: "set_score", name, score }));
+  scoreValueInput.value = "";
+});
+
 deltaInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") awardBtn.click();
+});
+
+scoreValueInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") setScoreBtn.click();
 });
 
 doubleBtn.addEventListener("click", () => {

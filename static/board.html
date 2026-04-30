@@ -6,30 +6,52 @@
   <title>Своя игра - Экран</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body>
-  <div class="app">
-    <div class="header">
-      <div>
-        <div class="title">Своя игра - Музыкальный квиз</div>
-        <div class="subtitle">Общий экран для доски, таймера и финала</div>
+<body class="board-screen">
+  <div class="app shell">
+    <div class="hero hero-board">
+      <div class="hero-copy">
+        <div class="eyebrow">Birthday Music Quiz</div>
+        <div class="title">Своя игра</div>
+        <div class="subtitle">Категории, быстрые ответы и турнирная таблица на одном экране.</div>
       </div>
-      <div class="status" id="currentStatus">Ожидание выбора вопроса</div>
+      <div class="hero-status">
+        <div class="status-pill">Сцена</div>
+        <div class="hero-value" id="currentStatus">Ожидание выбора вопроса</div>
+      </div>
     </div>
 
-    <div class="board" id="board"></div>
+    <section class="panel board-panel hero-board-panel">
+      <div class="panel-head">
+        <h2>Игровое поле</h2>
+        <div class="status soft-status">Выбор категорий и стоимости вопросов.</div>
+      </div>
+      <div class="board marquee-board" id="board"></div>
+    </section>
 
-    <div class="panel">
-      <h2>Текущий вопрос</h2>
-      <div class="status" id="currentQuestion">-</div>
-      <div class="buzz" id="buzz">Кто ответит первым: -</div>
-      <audio id="audio" controls></audio>
-      <div class="status" id="answer">Ответ: скрыт</div>
-    </div>
+    <div class="showcase-grid">
+      <section class="panel spotlight">
+        <div class="panel-head">
+          <h2>В центре внимания</h2>
+          <div class="status soft-status">Кто отвечает прямо сейчас и сколько осталось времени.</div>
+        </div>
+        <div class="question-stage">
+          <div class="status big-status" id="currentQuestion">-</div>
+          <div class="timer marquee-timer" id="answerTimer">Таймер ответа: -</div>
+          <div class="buzz spotlight-buzz" id="buzz">Кто ответит первым: -</div>
+          <div class="audio-wrap">
+            <audio id="audio" controls></audio>
+          </div>
+          <div class="status answer-line" id="answer">Ответ: скрыт</div>
+        </div>
+      </section>
 
-    <div class="panel">
-      <h2>Таблица очков</h2>
-      <div class="status" id="scoresStatus">Очки видны игрокам</div>
-      <div class="scoreboard" id="scores"></div>
+      <section class="panel scoreboard-panel">
+        <div class="panel-head">
+          <h2>Таблица очков</h2>
+          <div class="status soft-status" id="scoresStatus">Очки видны игрокам</div>
+        </div>
+        <div class="scoreboard deluxe-scoreboard" id="scores"></div>
+      </section>
     </div>
   </div>
 

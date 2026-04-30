@@ -6,35 +6,50 @@
   <title>Своя игра - Игрок</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body>
-  <div class="app">
-    <div class="player-card panel">
-      <h2>Подключение</h2>
+<body class="player-screen">
+  <div class="app player-shell">
+    <div class="player-hero">
+      <div class="eyebrow">Player Entry</div>
+      <div class="title">Своя игра</div>
+      <div class="subtitle">Подключайся, жми кнопку и лови момент быстрее остальных.</div>
+    </div>
+
+    <div class="player-card panel player-panel">
+      <div class="panel-head">
+        <h2>Подключение</h2>
+        <div class="status soft-status">Имя будет видно ведущему и в таблице очков.</div>
+      </div>
       <input class="input" id="nameInput" placeholder="Имя" />
-      <button class="button" id="connect">Войти</button>
+      <button class="button wide-button" id="connect">Войти</button>
       <div class="status" id="playerStatus">Введите имя и подключитесь.</div>
     </div>
 
-    <div class="player-card panel" id="gamePanel" style="display:none;">
-      <h2>Текущий раунд</h2>
-      <div class="status" id="questionStatus">Ожидание вопроса</div>
-      <button class="button buzz-button" id="buzz">Ответить</button>
-      <div class="buzz" id="buzzStatus">Первый: -</div>
+    <div class="player-card panel player-panel active-answer-panel" id="gamePanel" style="display:none;">
+      <div class="panel-head">
+        <h2>Текущий раунд</h2>
+        <div class="status soft-status">После первого нажатия трек останавливается, а таймер ответа идет 15 секунд.</div>
+      </div>
+      <div class="status big-status center-text" id="questionStatus">Ожидание вопроса</div>
+      <div class="timer marquee-timer center-text" id="answerTimer">Таймер ответа: -</div>
+      <button class="button buzz-button stage-buzzer" id="buzz">Ответить</button>
+      <div class="buzz center-text" id="buzzStatus">Первый: -</div>
     </div>
 
-    <div class="player-card panel" id="finalPanel" style="display:none;">
-      <h2>Финальный раунд</h2>
-      <div class="status" id="finalPlayerStatus">Ждем запуска финала</div>
+    <div class="player-card panel player-panel" id="finalPanel" style="display:none;">
+      <div class="panel-head">
+        <h2>Финальный раунд</h2>
+        <div class="status soft-status" id="finalPlayerStatus">Ждем запуска финала</div>
+      </div>
       <label class="field">
         <span>Ставка</span>
         <input class="input" id="wagerInput" type="number" min="0" value="0" />
       </label>
-      <button class="button" id="submitWager">Отправить ставку</button>
+      <button class="button wide-button" id="submitWager">Отправить ставку</button>
       <label class="field">
         <span>Ответ</span>
         <input class="input" id="answerInput" type="text" placeholder="Твой ответ" />
       </label>
-      <button class="button" id="submitAnswer">Отправить ответ</button>
+      <button class="button wide-button" id="submitAnswer">Отправить ответ</button>
     </div>
   </div>
 

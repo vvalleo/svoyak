@@ -3,6 +3,7 @@ const connectBtn = document.getElementById("connect");
 const playerStatus = document.getElementById("playerStatus");
 const gamePanel = document.getElementById("gamePanel");
 const questionStatus = document.getElementById("questionStatus");
+const answerTimerEl = document.getElementById("answerTimer");
 const buzzBtn = document.getElementById("buzz");
 const buzzStatus = document.getElementById("buzzStatus");
 const finalPanel = document.getElementById("finalPanel");
@@ -15,6 +16,8 @@ const submitAnswerBtn = document.getElementById("submitAnswer");
 let ws = null;
 let connected = false;
 let currentOpen = false;
+let playerName = null;
+let answerTimerInterval = null;
 
 function setStatus(text) {
   playerStatus.textContent = text;
@@ -32,16 +35,42 @@ function setBuzzEnabled(enabled) {
   buzzBtn.disabled = !enabled;
 }
 
-function updateQuestion(current, buzzOpen) {
+function updateAnswerTimer(deadline) {
+  if (answerTimerInterval) {
+    clearInterval(answerTimerInterval);
+    answerTimerInterval = null;
+  }
+
+  if (!deadline) {
+    answerTimerEl.textContent = "Таймер ответа: -";
+    return;
+  }
+
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
+    answerTimerEl.textContent = `Таймер ответа: ${remaining} сек`;
+    if (remaining <= 0 && answerTimerInterval) {
+      clearInterval(answerTimerInterval);
+      answerTimerInterval = null;
+    }
+  };
+
+  tick();
+  answerTimerInterval = setInterval(tick, 250);
+}
+
+function updateQuestion(current, buzzOpen, playerAnswered) {
   if (!current || current.kind === "final") {
     currentOpen = false;
     setQuestion(current?.kind === "final" ? "Финальный раунд идет" : "Ожидание вопроса");
     setBuzzEnabled(false);
+    updateAnswerTimer(null);
     return;
   }
   currentOpen = true;
   setQuestion(`Идет вопрос за ${current.points}`);
-  setBuzzEnabled(Boolean(buzzOpen));
+  setBuzzEnabled(Boolean(buzzOpen) && !playerAnswered);
+  updateAnswerTimer(stateCache?.answer_timer_deadline || null);
 }
 
 function updateFinal(finalRound, current) {
@@ -80,13 +109,18 @@ function updateFinal(finalRound, current) {
   }
 }
 
+let stateCache = null;
+
 function updateState(data) {
-  updateQuestion(data.current, data.buzz_open && !data.buzz);
+  stateCache = data;
+  updateQuestion(data.current, data.buzz_open && !data.buzz, data.player_answered);
 
   if (data.current?.kind === "final") {
     setBuzz("Финал: ответы скрыты");
   } else if (data.buzz) {
-    setBuzz(`Первый: ${data.buzz}`);
+    setBuzz(data.buzz === playerName ? "Ты отвечаешь сейчас" : `Отвечает: ${data.buzz}`);
+  } else if (data.player_answered) {
+    setBuzz("Ты уже отвечала в этом вопросе");
   } else if (data.buzz_open) {
     setBuzz("Кнопка активна");
   } else {
@@ -111,6 +145,7 @@ connectBtn.addEventListener("click", () => {
     const msg = JSON.parse(event.data);
     if (msg.type === "state") {
       connected = true;
+      playerName = msg.name;
       nameInput.disabled = true;
       connectBtn.disabled = true;
       gamePanel.style.display = "block";
@@ -119,11 +154,14 @@ connectBtn.addEventListener("click", () => {
     }
     if (msg.type === "question_opened" && msg.current?.kind === "board") {
       setBuzz("Кнопка активна");
-      setBuzzEnabled(true);
+      setBuzzEnabled(!stateCache?.player_answered);
     }
     if (msg.type === "buzz" && msg.name) {
-      setBuzz(`Первый: ${msg.name}`);
+      setBuzz(msg.name === playerName ? "Ты отвечаешь сейчас" : `Отвечает: ${msg.name}`);
       setBuzzEnabled(false);
+    }
+    if (msg.type === "answer_timer_expired") {
+      answerTimerEl.textContent = "Таймер ответа: время вышло";
     }
   });
 

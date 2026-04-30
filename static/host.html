@@ -6,74 +6,113 @@
   <title>Своя игра - Ведущий</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body>
-  <div class="app">
-    <div class="header">
-      <div>
-        <div class="title">Своя игра - Панель ведущего</div>
-        <div class="subtitle">Таймер, обычный раунд, финал и ручное начисление очков</div>
+<body class="host-screen">
+  <div class="app shell">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">Music Jeopardy Control Room</div>
+        <div class="title">Своя игра</div>
+        <div class="subtitle">Панель ведущего для раундов, ответов и финала.</div>
       </div>
-      <div class="status" id="hostStatus">Ожидание выбора</div>
-    </div>
-
-    <div class="panel split-panel">
-      <div>
-        <h2>Раунд</h2>
-        <div class="status">Длительность вопроса теперь задается длиной твоего аудио-фрагмента.</div>
-      </div>
-      <div class="controls align-end">
-        <button class="button secondary" id="startFinal">Запустить финал</button>
-        <button class="button secondary" id="openFinal">Открыть финальный вопрос</button>
-        <button class="button" id="revealFinalScores">Показать финальные очки</button>
-        <button class="button danger" id="resetFinal">Сбросить финал</button>
+      <div class="hero-status">
+        <div class="status-pill">Статус эфира</div>
+        <div class="hero-value" id="hostStatus">Ожидание выбора</div>
       </div>
     </div>
 
-    <div class="panel split-panel">
-      <div>
-        <h2>Вход для игроков</h2>
-        <div class="status" id="playerLink">Ссылка появится после загрузки страницы</div>
-      </div>
-      <div class="qr-wrap">
-        <img id="playerQr" alt="QR для игроков" class="qr-image" />
-      </div>
+    <div class="dashboard-grid">
+      <section class="panel spotlight">
+        <div class="panel-head">
+          <h2>Текущий вопрос</h2>
+          <div class="status soft-status">После нажатия игроком запускается таймер ответа на 15 секунд.</div>
+        </div>
+        <div class="question-stage">
+          <div class="status big-status" id="currentQuestion">-</div>
+          <div class="timer marquee-timer" id="answerTimer">Таймер ответа: -</div>
+          <div class="buzz spotlight-buzz" id="buzz">Кто ответит первым: -</div>
+          <div class="audio-wrap">
+            <audio id="audio" controls></audio>
+          </div>
+          <div class="status answer-line" id="answer">Ответ: -</div>
+        </div>
+        <div class="controls stage-actions">
+          <button class="button secondary" id="reveal">Показать ответ</button>
+          <button class="button secondary" id="clearBuzz">Неверно / открыть кнопку</button>
+          <button class="button danger" id="closeQuestion">Закрыть вопрос</button>
+        </div>
+      </section>
+
+      <aside class="stack">
+        <section class="panel compact-panel">
+          <div class="panel-head">
+            <h2>Финал</h2>
+            <div class="status soft-status">Управление последним раундом и раскрытием итогов.</div>
+          </div>
+          <div class="controls vertical-buttons">
+            <button class="button secondary" id="startFinal">Запустить финал</button>
+            <button class="button secondary" id="openFinal">Открыть финальный вопрос</button>
+            <button class="button" id="revealFinalScores">Показать финальные очки</button>
+            <button class="button danger" id="resetFinal">Сбросить финал</button>
+          </div>
+        </section>
+
+        <section class="panel compact-panel">
+          <div class="panel-head">
+            <h2>Вход игроков</h2>
+            <div class="status soft-status">Покажи QR на экране, чтобы все быстро подключились.</div>
+          </div>
+          <div class="entry-card">
+            <div class="status link-status" id="playerLink">Ссылка появится после загрузки страницы</div>
+            <div class="qr-wrap framed-qr">
+              <img id="playerQr" alt="QR для игроков" class="qr-image" />
+            </div>
+          </div>
+        </section>
+      </aside>
     </div>
 
-    <div class="board" id="board"></div>
-
-    <div class="panel">
-      <h2>Управление вопросом</h2>
-      <div class="status" id="currentQuestion">-</div>
-      <audio id="audio" controls></audio>
-      <div class="controls">
-        <button class="button secondary" id="reveal">Показать ответ</button>
-        <button class="button secondary" id="clearBuzz">Сбросить кнопку</button>
-        <button class="button danger" id="closeQuestion">Закрыть вопрос</button>
+    <section class="panel board-panel">
+      <div class="panel-head">
+        <h2>Игровое поле</h2>
+        <div class="status soft-status">Категории и клетки выбора.</div>
       </div>
-      <div class="status" id="answer">Ответ: -</div>
-      <div class="buzz" id="buzz">Кто ответит первым: -</div>
-    </div>
+      <div class="board marquee-board" id="board"></div>
+    </section>
 
-    <div class="panel">
-      <h2>Начисление очков</h2>
-      <div class="controls">
-        <select class="input" id="playerSelect"></select>
-        <input class="input" id="delta" type="number" placeholder="Очки, например 200 или -200" />
-        <button class="button" id="award">Применить</button>
-        <button class="button secondary" id="double">Удвоить текущий вопрос</button>
-        <button class="button danger" id="minus">Списать текущий вопрос</button>
-      </div>
-    </div>
+    <div class="lower-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Очки</h2>
+          <div class="status soft-status">Добавление, штрафы и ручная корректировка счета.</div>
+        </div>
+        <div class="form-grid">
+          <select class="input" id="playerSelect"></select>
+          <input class="input" id="delta" type="number" placeholder="Изменение, например 200 или -200" />
+          <button class="button" id="award">Применить</button>
+          <button class="button secondary" id="double">Удвоить текущий вопрос</button>
+          <button class="button danger" id="minus">Списать текущий вопрос</button>
+        </div>
+        <div class="form-grid compact-grid">
+          <input class="input" id="scoreValue" type="number" placeholder="Итоговый счет игрока" />
+          <button class="button secondary" id="setScore">Установить счет</button>
+        </div>
+      </section>
 
-    <div class="panel">
-      <h2>Финальный раунд</h2>
-      <div class="status" id="finalStatus">Финал еще не запущен</div>
-      <div class="final-grid" id="finalGrid"></div>
-    </div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Финальный раунд</h2>
+          <div class="status soft-status" id="finalStatus">Финал еще не запущен</div>
+        </div>
+        <div class="final-grid" id="finalGrid"></div>
+      </section>
 
-    <div class="panel">
-      <h2>Таблица очков</h2>
-      <div class="scoreboard" id="scores"></div>
+      <section class="panel scoreboard-panel">
+        <div class="panel-head">
+          <h2>Турнирная таблица</h2>
+          <div class="status soft-status">Живой рейтинг игроков в текущей партии.</div>
+        </div>
+        <div class="scoreboard deluxe-scoreboard" id="scores"></div>
+      </section>
     </div>
   </div>
 

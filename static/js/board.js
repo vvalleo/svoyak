@@ -2,12 +2,14 @@ const boardEl = document.getElementById("board");
 const scoresEl = document.getElementById("scores");
 const currentStatus = document.getElementById("currentStatus");
 const currentQuestion = document.getElementById("currentQuestion");
+const answerTimerEl = document.getElementById("answerTimer");
 const buzzEl = document.getElementById("buzz");
 const audioEl = document.getElementById("audio");
 const answerEl = document.getElementById("answer");
 const scoresStatusEl = document.getElementById("scoresStatus");
 
 let state = null;
+let answerTimerInterval = null;
 
 function renderBoard(data) {
   boardEl.innerHTML = "";
@@ -48,6 +50,30 @@ function renderScores(scores, visible) {
   });
 }
 
+function updateAnswerTimer(deadline) {
+  if (answerTimerInterval) {
+    clearInterval(answerTimerInterval);
+    answerTimerInterval = null;
+  }
+
+  if (!deadline) {
+    answerTimerEl.textContent = "Таймер ответа: -";
+    return;
+  }
+
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
+    answerTimerEl.textContent = `Таймер ответа: ${remaining} сек`;
+    if (remaining <= 0 && answerTimerInterval) {
+      clearInterval(answerTimerInterval);
+      answerTimerInterval = null;
+    }
+  };
+
+  tick();
+  answerTimerInterval = setInterval(tick, 250);
+}
+
 function updateCurrent(data) {
   if (!data || !data.current) {
     currentStatus.textContent = data?.final_round?.active ? "Финал в процессе" : "Ожидание выбора вопроса";
@@ -55,6 +81,7 @@ function updateCurrent(data) {
     answerEl.textContent = "Ответ: скрыт";
     audioEl.removeAttribute("src");
     audioEl.pause();
+    updateAnswerTimer(null);
     return;
   }
 
@@ -67,6 +94,7 @@ function updateCurrent(data) {
   }
 
   answerEl.textContent = "Ответ: скрыт";
+  updateAnswerTimer(data.answer_timer_deadline);
 }
 
 function updateBuzz(name, buzzOpen, currentKind) {
@@ -105,9 +133,13 @@ ws.addEventListener("message", (event) => {
     audioEl.load();
   }
   if (msg.type === "buzz") {
+    audioEl.pause();
     updateBuzz(msg.name, false, state?.current?.kind);
   }
   if (msg.type === "answer") {
     answerEl.textContent = `Ответ: ${msg.answer || "-"}`;
+  }
+  if (msg.type === "answer_timer_expired") {
+    answerTimerEl.textContent = "Таймер ответа: время вышло";
   }
 });

@@ -156,6 +156,13 @@ connectBtn.addEventListener("click", () => {
       setBuzz("Кнопка активна");
       setBuzzEnabled(!stateCache?.player_answered);
     }
+    if (msg.type === "question_reopened" && msg.current?.kind === "board") {
+      setQuestion(`Идет вопрос за ${msg.current.points}`);
+      if (!stateCache?.player_answered) {
+        setBuzz("Кнопка активна");
+        setBuzzEnabled(true);
+      }
+    }
     if (msg.type === "buzz" && msg.name) {
       setBuzz(msg.name === playerName ? "Ты отвечаешь сейчас" : `Отвечает: ${msg.name}`);
       setBuzzEnabled(false);

@@ -145,6 +145,9 @@ ws.addEventListener("message", (event) => {
     audioEl.load();
     audioEl.play().catch(() => {});
   }
+  if (msg.type === "question_reopened" && msg.current?.kind === "board") {
+    currentQuestion.textContent = `Категория ${msg.current.cat + 1}, вопрос ${msg.current.q + 1} (${msg.current.points})`;
+  }
   if (msg.type === "buzz") {
     audioEl.pause();
     updateBuzz(msg.name, false, state?.current?.kind);

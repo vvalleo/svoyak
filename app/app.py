@@ -137,6 +137,15 @@ def current_payload() -> Optional[Dict[str, Any]]:
     }
 
 
+async def reopen_current_question() -> None:
+    await broadcast(
+        {
+            "type": "question_reopened",
+            "current": current_payload(),
+        }
+    )
+
+
 def public_scores(role: str) -> Dict[str, Optional[int]]:
     if role == "host" or state["public_scores_visible"]:
         return dict(state["scores"])
@@ -408,11 +417,15 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     state["answered_players"] = set()
                 elif result == "wrong":
                     state["scores"][target] = sanitize_score(state["scores"][target] - points)
+                    state["chooser"] = None
                     state["buzz"] = None
                     state["buzz_open"] = True
+                    await reopen_current_question()
                 elif result == "no_penalty":
+                    state["chooser"] = None
                     state["buzz"] = None
                     state["buzz_open"] = True
+                    await reopen_current_question()
                 await broadcast_state()
 
             elif msg_type == "set_score" and role == "host":

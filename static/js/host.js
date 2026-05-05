@@ -11,6 +11,7 @@ const playerSelect = document.getElementById("playerSelect");
 const deltaInput = document.getElementById("delta");
 const scoreValueInput = document.getElementById("scoreValue");
 const finalStatus = document.getElementById("finalStatus");
+const finalTimerEl = document.getElementById("finalTimer");
 const finalGrid = document.getElementById("finalGrid");
 const playerLinkEl = document.getElementById("playerLink");
 const playerQrEl = document.getElementById("playerQr");
@@ -31,6 +32,7 @@ const resetFinalBtn = document.getElementById("resetFinal");
 let state = null;
 let currentPoints = 0;
 let answerTimerInterval = null;
+let finalTimerInterval = null;
 const playerUrl = `${window.location.origin}/player`;
 
 playerLinkEl.textContent = playerUrl;
@@ -108,6 +110,30 @@ function updateAnswerTimer(deadline) {
   answerTimerInterval = setInterval(tick, 250);
 }
 
+function updateFinalTimer(deadline, phase) {
+  if (finalTimerInterval) {
+    clearInterval(finalTimerInterval);
+    finalTimerInterval = null;
+  }
+
+  if (!deadline) {
+    finalTimerEl.textContent = phase === "review" ? "Таймер финала: прием ответов завершен" : "Таймер финала: -";
+    return;
+  }
+
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
+    finalTimerEl.textContent = `Таймер финала: ${remaining} сек`;
+    if (remaining <= 0 && finalTimerInterval) {
+      clearInterval(finalTimerInterval);
+      finalTimerInterval = null;
+    }
+  };
+
+  tick();
+  finalTimerInterval = setInterval(tick, 250);
+}
+
 function updateCurrent(data) {
   if (!data || !data.current) {
     if (data?.final_round?.active) {
@@ -159,16 +185,20 @@ function updateChooser(chooser) {
 function renderFinal(finalRound) {
   if (!finalRound.active) {
     finalStatus.textContent = "Финал еще не запущен";
+    updateFinalTimer(null, null);
     finalGrid.innerHTML = "";
     return;
   }
 
   const phaseMap = {
     wagering: "Игроки делают ставки",
+    wagering_closed: "Ставки закрыты",
     answering: "Игроки отправляют ответы",
+    review: "Идет проверка ответов",
     done: "Финал завершен",
   };
   finalStatus.textContent = phaseMap[finalRound.phase] || "Финал активен";
+  updateFinalTimer(finalRound.timer_deadline, finalRound.phase);
 
   const allPlayers = Object.keys(state.scores || {});
   finalGrid.innerHTML = "";
@@ -244,6 +274,9 @@ ws.addEventListener("message", (event) => {
   }
   if (msg.type === "answer_timer_expired") {
     answerTimerEl.textContent = "Таймер ответа: время вышло";
+  }
+  if (msg.type === "final_timer_expired") {
+    updateFinalTimer(null, msg.stage === "answering" ? "review" : "wagering_closed");
   }
 });
 

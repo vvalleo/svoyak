@@ -51,6 +51,7 @@ state: Dict[str, Any] = {
         "answers": {},
         "graded": {},
         "revealed": False,
+        "timer_deadline": None,
     },
 }
 
@@ -161,6 +162,7 @@ def public_final_state(role: str, player_name: Optional[str]) -> Dict[str, Any]:
         "phase": final_state["phase"],
         "revealed": final_state["revealed"],
         "title": final_question_data().get("title") or "Финальный раунд",
+        "timer_deadline": final_state["timer_deadline"],
     }
 
     if role == "host":
@@ -193,6 +195,7 @@ def board_state_for(role: str, player_name: Optional[str] = None) -> Dict[str, A
         "buzz_open": state["buzz_open"],
         "chooser": state["chooser"],
         "player_answered": player_name in state["answered_players"] if player_name else False,
+        "own_score": state["scores"].get(player_name) if player_name else None,
         "answer_timer_deadline": state["answer_timer_deadline"],
         "scores": public_scores(role),
         "public_scores_visible": state["public_scores_visible"],
@@ -244,6 +247,39 @@ def stop_answer_timer() -> None:
     state["answer_timer_deadline"] = None
 
 
+def stop_final_timer() -> None:
+    task = state["final_round"].get("timer_task")
+    if task and not task.done():
+        task.cancel()
+    state["final_round"]["timer_task"] = None
+    state["final_round"]["timer_deadline"] = None
+
+
+def start_final_timer(seconds: int, stage: str) -> None:
+    stop_final_timer()
+    state["final_round"]["timer_deadline"] = time.time() + seconds
+
+    async def timer_runner() -> None:
+        try:
+            await asyncio.sleep(seconds)
+            state["final_round"]["timer_task"] = None
+            state["final_round"]["timer_deadline"] = None
+            if not state["final_round"]["active"]:
+                return
+            if stage == "wagering" and state["final_round"]["phase"] == "wagering":
+                for name in state["scores"]:
+                    state["final_round"]["wagers"].setdefault(name, 0)
+                state["final_round"]["phase"] = "wagering_closed"
+            elif stage == "answering" and state["final_round"]["phase"] == "answering":
+                state["final_round"]["phase"] = "review"
+            await broadcast({"type": "final_timer_expired", "stage": stage})
+            await broadcast_state()
+        except asyncio.CancelledError:
+            pass
+
+    state["final_round"]["timer_task"] = asyncio.create_task(timer_runner())
+
+
 def start_answer_timer() -> None:
     stop_answer_timer()
     state["answer_timer_deadline"] = time.time() + DEFAULT_TIMER_SECONDS
@@ -272,6 +308,8 @@ def reset_final_round() -> None:
         "answers": {},
         "graded": {},
         "revealed": False,
+        "timer_deadline": None,
+        "timer_task": None,
     }
 
 
@@ -455,6 +493,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
 
             elif msg_type == "start_final_round" and role == "host":
                 stop_answer_timer()
+                stop_final_timer()
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
@@ -468,7 +507,10 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     "answers": {},
                     "graded": {},
                     "revealed": False,
+                    "timer_deadline": None,
+                    "timer_task": None,
                 }
+                start_final_timer(10, "wagering")
                 await broadcast_state()
 
             elif msg_type == "submit_wager" and role == "player":
@@ -484,13 +526,17 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     await broadcast_state()
 
             elif msg_type == "open_final_question" and role == "host":
-                if not state["final_round"]["active"] or state["final_round"]["phase"] != "wagering":
+                if not state["final_round"]["active"] or state["final_round"]["phase"] not in {"wagering", "wagering_closed"}:
                     continue
                 stop_answer_timer()
+                stop_final_timer()
+                for name in state["scores"]:
+                    state["final_round"]["wagers"].setdefault(name, 0)
                 state["final_round"]["phase"] = "answering"
                 state["current"] = {"kind": "final"}
                 state["buzz"] = None
                 state["buzz_open"] = False
+                start_final_timer(25, "answering")
                 await broadcast(
                     {
                         "type": "question_opened",
@@ -527,12 +573,14 @@ async def ws_endpoint(ws: WebSocket) -> None:
 
             elif msg_type == "reveal_final_scores" and role == "host":
                 stop_answer_timer()
+                stop_final_timer()
                 state["public_scores_visible"] = True
                 state["final_round"]["phase"] = "done"
                 await broadcast_state()
 
             elif msg_type == "reset_final_round" and role == "host":
                 stop_answer_timer()
+                stop_final_timer()
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False

@@ -1,6 +1,7 @@
 const nameInput = document.getElementById("nameInput");
 const connectBtn = document.getElementById("connect");
 const playerStatus = document.getElementById("playerStatus");
+const playerScoreEl = document.getElementById("playerScore");
 const gamePanel = document.getElementById("gamePanel");
 const questionStatus = document.getElementById("questionStatus");
 const answerTimerEl = document.getElementById("answerTimer");
@@ -8,6 +9,7 @@ const buzzBtn = document.getElementById("buzz");
 const buzzStatus = document.getElementById("buzzStatus");
 const finalPanel = document.getElementById("finalPanel");
 const finalPlayerStatus = document.getElementById("finalPlayerStatus");
+const finalTimerEl = document.getElementById("finalTimer");
 const wagerInput = document.getElementById("wagerInput");
 const submitWagerBtn = document.getElementById("submitWager");
 const answerInput = document.getElementById("answerInput");
@@ -18,6 +20,7 @@ let connected = false;
 let currentOpen = false;
 let playerName = null;
 let answerTimerInterval = null;
+let finalTimerInterval = null;
 
 function setStatus(text) {
   playerStatus.textContent = text;
@@ -33,6 +36,10 @@ function setBuzz(text) {
 
 function setBuzzEnabled(enabled) {
   buzzBtn.disabled = !enabled;
+}
+
+function setPlayerScore(score) {
+  playerScoreEl.textContent = `Твои очки: ${score ?? "-"}`;
 }
 
 function updateAnswerTimer(deadline) {
@@ -59,6 +66,30 @@ function updateAnswerTimer(deadline) {
   answerTimerInterval = setInterval(tick, 250);
 }
 
+function updateFinalTimer(deadline, phase) {
+  if (finalTimerInterval) {
+    clearInterval(finalTimerInterval);
+    finalTimerInterval = null;
+  }
+
+  if (!deadline) {
+    finalTimerEl.textContent = phase === "review" ? "Таймер финала: прием ответов завершен" : "Таймер финала: -";
+    return;
+  }
+
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil(deadline - Date.now() / 1000));
+    finalTimerEl.textContent = `Таймер финала: ${remaining} сек`;
+    if (remaining <= 0 && finalTimerInterval) {
+      clearInterval(finalTimerInterval);
+      finalTimerInterval = null;
+    }
+  };
+
+  tick();
+  finalTimerInterval = setInterval(tick, 250);
+}
+
 function updateQuestion(current, buzzOpen, playerAnswered) {
   if (!current || current.kind === "final") {
     currentOpen = false;
@@ -76,6 +107,7 @@ function updateQuestion(current, buzzOpen, playerAnswered) {
 function updateFinal(finalRound, current) {
   if (!finalRound.active) {
     finalPanel.style.display = "none";
+    updateFinalTimer(null, null);
     return;
   }
 
@@ -94,12 +126,24 @@ function updateFinal(finalRound, current) {
     submitWagerBtn.disabled = false;
     answerInput.disabled = true;
     submitAnswerBtn.disabled = true;
+  } else if (finalRound.phase === "wagering_closed") {
+    finalPlayerStatus.textContent = "Время на ставку вышло. Неотправленная ставка стала 0.";
+    wagerInput.disabled = true;
+    submitWagerBtn.disabled = true;
+    answerInput.disabled = true;
+    submitAnswerBtn.disabled = true;
   } else if (finalRound.phase === "answering") {
     finalPlayerStatus.textContent = current?.title || "Отправь свой ответ";
     wagerInput.disabled = true;
     submitWagerBtn.disabled = true;
     answerInput.disabled = false;
     submitAnswerBtn.disabled = false;
+  } else if (finalRound.phase === "review") {
+    finalPlayerStatus.textContent = "Время на ответ вышло. Ждем решения ведущего.";
+    wagerInput.disabled = true;
+    submitWagerBtn.disabled = true;
+    answerInput.disabled = true;
+    submitAnswerBtn.disabled = true;
   } else {
     finalPlayerStatus.textContent = "Финальный раунд завершен";
     wagerInput.disabled = true;
@@ -107,12 +151,15 @@ function updateFinal(finalRound, current) {
     answerInput.disabled = true;
     submitAnswerBtn.disabled = true;
   }
+
+  updateFinalTimer(finalRound.timer_deadline, finalRound.phase);
 }
 
 let stateCache = null;
 
 function updateState(data) {
   stateCache = data;
+  setPlayerScore(data.own_score);
   updateQuestion(data.current, data.buzz_open && !data.buzz, data.player_answered);
 
   if (data.current?.kind === "final") {
@@ -169,6 +216,9 @@ connectBtn.addEventListener("click", () => {
     }
     if (msg.type === "answer_timer_expired") {
       answerTimerEl.textContent = "Таймер ответа: время вышло";
+    }
+    if (msg.type === "final_timer_expired") {
+      updateFinalTimer(null, msg.stage === "answering" ? "review" : "wagering_closed");
     }
   });
 

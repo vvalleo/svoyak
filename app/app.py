@@ -383,7 +383,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 cat = int(data.get("cat"))
                 q = int(data.get("q"))
                 key = _key(cat, q)
-                if key in state["opened"] or state["final_round"]["active"]:
+                if key in state["opened"] or state["final_round"]["active"] or state["current"] is not None:
                     continue
                 stop_answer_timer()
                 state["opened"].add(key)
@@ -473,22 +473,15 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     state["scores"][target] = sanitize_score(score)
                     await broadcast_state()
 
-            elif msg_type == "reveal_answer" and role == "host":
-                if state["current"] is None:
-                    continue
-                stop_answer_timer()
-                if state["current"]["kind"] == "final":
-                    state["final_round"]["revealed"] = True
-                await broadcast({"type": "answer", "answer": answer_for_current()})
-                await broadcast_state()
-
             elif msg_type == "close_question" and role == "host":
+                answer = answer_for_current()
                 stop_answer_timer()
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
                 state["chooser"] = None
                 state["answered_players"] = set()
+                await broadcast({"type": "answer", "answer": answer})
                 await broadcast_state()
 
             elif msg_type == "start_final_round" and role == "host":

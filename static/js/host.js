@@ -16,7 +16,6 @@ const finalGrid = document.getElementById("finalGrid");
 const playerLinkEl = document.getElementById("playerLink");
 const playerQrEl = document.getElementById("playerQr");
 
-const revealBtn = document.getElementById("reveal");
 const resolveCorrectBtn = document.getElementById("resolveCorrect");
 const resolveDoubleBtn = document.getElementById("resolveDouble");
 const resolveWrongBtn = document.getElementById("resolveWrong");
@@ -58,9 +57,9 @@ function renderBoard(data) {
       const q = cat.questions[r];
       const cell = document.createElement("div");
       cell.className = "board-cell";
-      if (q.opened || data.final_round.active) cell.classList.add("disabled");
+      if (q.opened || data.final_round.active || data.current) cell.classList.add("disabled");
       cell.textContent = q.opened ? "" : q.points;
-      if (!q.opened && !data.final_round.active) {
+      if (!q.opened && !data.final_round.active && !data.current) {
         cell.addEventListener("click", () => openQuestion(cIdx, r));
       }
       boardEl.appendChild(cell);
@@ -296,10 +295,6 @@ resolveCorrectBtn.addEventListener("click", () => resolveBuzz("correct"));
 resolveDoubleBtn.addEventListener("click", () => resolveBuzz("double"));
 resolveWrongBtn.addEventListener("click", () => resolveBuzz("wrong"));
 resolveNoPenaltyBtn.addEventListener("click", () => resolveBuzz("no_penalty"));
-
-revealBtn.addEventListener("click", () => {
-  ws.send(JSON.stringify({ type: "reveal_answer" }));
-});
 
 closeQuestionBtn.addEventListener("click", () => {
   ws.send(JSON.stringify({ type: "close_question" }));

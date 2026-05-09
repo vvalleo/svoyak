@@ -36,6 +36,7 @@ def _key(cat_idx: int, q_idx: int) -> str:
 state: Dict[str, Any] = {
     "opened": set(),
     "current": None,
+    "revealed_answer": None,
     "buzz": None,
     "buzz_open": False,
     "chooser": None,
@@ -203,6 +204,7 @@ def board_state_for(role: str, player_name: Optional[str] = None) -> Dict[str, A
     return {
         "categories": categories,
         "current": current_payload(),
+        "revealed_answer": state["revealed_answer"],
         "buzz": state["buzz"],
         "buzz_open": state["buzz_open"],
         "chooser": state["chooser"],
@@ -403,6 +405,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 stop_answer_timer()
                 state["opened"].add(key)
                 state["current"] = {"kind": "board", "cat": cat, "q": q}
+                state["revealed_answer"] = None
                 state["chooser"] = None
                 state["buzz"] = None
                 state["buzz_open"] = True
@@ -457,6 +460,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 if result == "correct":
                     state["scores"][target] = sanitize_score(state["scores"][target] + points)
                     state["chooser"] = target
+                    state["revealed_answer"] = None
                     state["current"] = None
                     state["buzz"] = None
                     state["buzz_open"] = False
@@ -464,6 +468,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 elif result == "double":
                     state["scores"][target] = sanitize_score(state["scores"][target] + points * 2)
                     state["chooser"] = target
+                    state["revealed_answer"] = None
                     state["current"] = None
                     state["buzz"] = None
                     state["buzz_open"] = False
@@ -491,6 +496,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
             elif msg_type == "close_question" and role == "host":
                 answer = answer_for_current()
                 stop_answer_timer()
+                state["revealed_answer"] = answer
                 state["current"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
@@ -503,6 +509,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 stop_answer_timer()
                 stop_final_timer()
                 state["current"] = None
+                state["revealed_answer"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
                 state["chooser"] = None
@@ -542,6 +549,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                     state["final_round"]["wagers"].setdefault(name, 0)
                 state["final_round"]["phase"] = "answering"
                 state["current"] = {"kind": "final"}
+                state["revealed_answer"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
                 start_final_timer(25, "answering")
@@ -590,6 +598,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 stop_answer_timer()
                 stop_final_timer()
                 state["current"] = None
+                state["revealed_answer"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
                 state["chooser"] = None

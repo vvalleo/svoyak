@@ -85,7 +85,7 @@ function updateCurrent(data) {
       currentStatus.textContent = "Ожидание выбора вопроса";
     }
     currentQuestion.textContent = "-";
-    answerEl.textContent = "Ответ: скрыт";
+    answerEl.textContent = `Ответ: ${data?.revealed_answer || "скрыт"}`;
     audioEl.removeAttribute("src");
     audioEl.pause();
     updateAnswerTimer(null);
@@ -100,7 +100,7 @@ function updateCurrent(data) {
     currentQuestion.textContent = `Категория ${data.current.cat + 1}, вопрос ${data.current.q + 1} (${data.current.points})`;
   }
 
-  answerEl.textContent = "Ответ: скрыт";
+  answerEl.textContent = `Ответ: ${data.revealed_answer || "скрыт"}`;
   updateAnswerTimer(data.answer_timer_deadline);
 }
 

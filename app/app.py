@@ -456,11 +456,12 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 result = data.get("result")
                 target = state["buzz"]
                 points = (current_question_data() or {}).get("points", 0)
+                answer = answer_for_current()
                 stop_answer_timer()
                 if result == "correct":
                     state["scores"][target] = sanitize_score(state["scores"][target] + points)
                     state["chooser"] = target
-                    state["revealed_answer"] = None
+                    state["revealed_answer"] = answer
                     state["current"] = None
                     state["buzz"] = None
                     state["buzz_open"] = False
@@ -468,7 +469,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 elif result == "double":
                     state["scores"][target] = sanitize_score(state["scores"][target] + points * 2)
                     state["chooser"] = target
-                    state["revealed_answer"] = None
+                    state["revealed_answer"] = answer
                     state["current"] = None
                     state["buzz"] = None
                     state["buzz_open"] = False

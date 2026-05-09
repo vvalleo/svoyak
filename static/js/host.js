@@ -300,6 +300,12 @@ closeQuestionBtn.addEventListener("click", () => {
   ws.send(JSON.stringify({ type: "close_question" }));
 });
 
+audioEl.addEventListener("ended", () => {
+  if (state?.current?.kind === "board") {
+    ws.send(JSON.stringify({ type: "close_question" }));
+  }
+});
+
 awardBtn.addEventListener("click", () => {
   const name = playerSelect.value;
   const delta = parseInt(deltaInput.value, 10);

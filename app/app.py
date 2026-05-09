@@ -15,7 +15,7 @@ import qrcode
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = BASE_DIR / "data" / "questions.json"
 STATIC_DIR = BASE_DIR / "static"
-DEFAULT_TIMER_SECONDS = 15
+DEFAULT_TIMER_SECONDS = 10
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -554,7 +554,7 @@ async def ws_endpoint(ws: WebSocket) -> None:
                 state["revealed_answer"] = None
                 state["buzz"] = None
                 state["buzz_open"] = False
-                start_final_timer(25, "answering")
+                start_final_timer(40, "answering")
                 await broadcast(
                     {
                         "type": "question_opened",

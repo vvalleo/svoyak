@@ -75,6 +75,18 @@ def unique_player_name(name: str) -> str:
     return f"{name} {i}"
 
 
+async def reclaim_player_name(name: str) -> str:
+    stale_connections = [conn for conn in connections if conn.role == "player" and conn.name == name]
+    for stale_conn in stale_connections:
+        try:
+            await stale_conn.ws.close()
+        except Exception:
+            pass
+        if stale_conn in connections:
+            connections.remove(stale_conn)
+    return name
+
+
 def sanitize_score(value: int) -> int:
     return value
 
@@ -366,7 +378,10 @@ async def ws_endpoint(ws: WebSocket) -> None:
             raw_name = (hello.get("name") or "Player").strip()
             if not raw_name:
                 raw_name = "Player"
-            name = unique_player_name(raw_name)
+            if raw_name in state["scores"]:
+                name = await reclaim_player_name(raw_name)
+            else:
+                name = unique_player_name(raw_name)
             state["scores"].setdefault(name, 0)
 
         conn = Connection(ws, role, name)

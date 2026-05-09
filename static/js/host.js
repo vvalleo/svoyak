@@ -144,7 +144,7 @@ function updateCurrent(data) {
     }
     currentQuestion.textContent = "-";
     currentPoints = 0;
-    answerEl.textContent = `Ответ: ${data?.revealed_answer || "-"}`;
+    answerEl.textContent = `Ответ: ${data?.host_answer || data?.revealed_answer || "-"}`;
     audioEl.removeAttribute("src");
     audioEl.pause();
     updateAnswerTimer(null);
@@ -161,7 +161,7 @@ function updateCurrent(data) {
     currentQuestion.textContent = `Категория ${data.current.cat + 1}, вопрос ${data.current.q + 1} (${data.current.points})`;
   }
 
-  answerEl.textContent = `Ответ: ${data.revealed_answer || "-"}`;
+  answerEl.textContent = `Ответ: ${data.host_answer || data.revealed_answer || "-"}`;
   updateAnswerTimer(data.answer_timer_deadline);
 }
 

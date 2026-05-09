@@ -205,6 +205,7 @@ def board_state_for(role: str, player_name: Optional[str] = None) -> Dict[str, A
         "categories": categories,
         "current": current_payload(),
         "revealed_answer": state["revealed_answer"],
+        "host_answer": answer_for_current() if role == "host" else None,
         "buzz": state["buzz"],
         "buzz_open": state["buzz_open"],
         "chooser": state["chooser"],

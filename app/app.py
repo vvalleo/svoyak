@@ -303,6 +303,10 @@ def start_answer_timer() -> None:
         try:
             await asyncio.sleep(DEFAULT_TIMER_SECONDS)
             if state["current"] and state["current"].get("kind") == "board":
+                current_player = state["buzz"]
+                points = (current_question_data() or {}).get("points", 0)
+                if current_player in state["scores"]:
+                    state["scores"][current_player] = sanitize_score(state["scores"][current_player] - points)
                 state["buzz"] = None
                 state["buzz_open"] = True
             state["answer_timer_deadline"] = None
